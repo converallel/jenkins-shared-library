@@ -106,7 +106,7 @@ def call(body) {
                     // send files to staging server if tests passed and it's not a hotfix branch
                     if (!env.CHANGE_BRANCH.startsWith('hotfix')) {
                         stage('Deploy - Staging') {
-                            deployTo(hosts.test.web, hosts.test.db, hosts.test.credentialId)
+                            deployTo(hosts.test.web, hosts.test.db, hosts.test.credentialId, true)
                         }
                     }
                 } else { // only push to master or integration gets here
@@ -114,13 +114,13 @@ def call(body) {
                         case 'master':
                             stage('Deploy - Production') {
                                 hosts.prod.each { host ->
-                                    deployTo(host.web, host.db, host.credentialId)
+                                    deployTo(host.web, host.db, host.credentialId, false)
                                 }
                             }
                             break
                         case 'integration':
                             stage('Deploy - Staging') {
-                                deployTo(hosts.test.web, hosts.test.db, hosts.test.credentialId)
+                                deployTo(hosts.test.web, hosts.test.db, hosts.test.credentialId, true)
                             }
                             break
                     }
@@ -165,9 +165,9 @@ def execute(scrip, dbHost, credentialId) {
     }
 }
 
-def deployTo(serverName, dbHost, credentialId) {
+def deployTo(serverName, dbHost, credentialId, isStaging) {
     withCredentials([usernamePassword(credentialsId: credentialId, passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
-        withEnv(["DB_HOST=${resolveHostname(dbHost)}", "SERVER_NAME=${serverName}"]) {
+        withEnv(["DB_HOST=${resolveHostname(dbHost)}", "SERVER_NAME=${serverName}", "STAGING=${isStaging}"]) {
             sh "${SHELL_SCRIPT_DIR}/env-config.sh"
             sh "${SHELL_SCRIPT_DIR}/ssh-publish.sh"
         }

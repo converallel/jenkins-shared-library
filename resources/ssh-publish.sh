@@ -21,8 +21,18 @@ composer dumpautoload -o
 bin/cake plugin assets symlink
 
 # update database
+${STAGING} && echo ${DB_PASSWORD} | mysql -h ${DB_HOST} -u ${DB_USERNAME} -p -e "DROP DATABASE IF EXISTS ${DB_NAME};"
 echo ${DB_PASSWORD} | mysql -h ${DB_HOST} -u ${DB_USERNAME} -p -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 bin/cake migrations migrate --no-lock
+
+# run staging seed if staging
+DB_EXISTS=`echo ${DB_PASSWORD} | mysqlshow -h ${DB_HOST} -u ${DB_USERNAME} -p ${DB_NAME} | grep -v Wildcard | grep -o ${DB_NAME}`
+if ${STAGING}; then
+    bin/cake migrations seed --seed StagingSeed
+# run production seed if it's the first time deploying to prod
+elif [[ ${DB_EXISTS} != ${DB_NAME} ]];then
+    bin/cake migrations seed --seed ProductionSeed
+fi
 cd ~
 
 # change owner to apache
