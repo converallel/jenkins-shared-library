@@ -67,40 +67,40 @@ def call(body) {
                     execute("${shellScriptDir}/development/test-db-setup.sh", hosts.jenkins.db, hosts.jenkins.credentialId)
                 }
 
-                try {
-                    stage('Test') {
-                        sh "${shellScriptDir}/development/test.sh"
-                    }
-                } finally {
-                    stage('Publish test reports') {
-                        // publish checkstyle analysis report
-                        checkstyle canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
-
-                        // publish duplicate code analysis report, compatible with PHPUnit >= 7
-                        // current version of CakePHP is incompatible with PHPUnit 7
-                        // dry canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
-
-                        // publish mess detector analysis report
-                        pmd canComputeNew: false, canRunOnFailed: true, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
-
-                        // publish code coverage report
-                        step([
-                                $class              : 'CloverPublisher',
-                                cloverReportDir     : reportDir,
-                                cloverReportFileName: 'clover.xml',
-                                healthyTarget       : [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80], // optional, default is: method=70, conditional=80, statement=80
-                                unhealthyTarget     : [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50], // optional, default is none
-                                failingTarget       : [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]     // optional, default is none
-                        ])
-
-                        // publish phpunit test report
-                        junit "${reportDir}/phpunit.xml"
-
-                        // remove test db
-                        execute("echo \${DB_PASSWORD} | mysql -h \${DB_HOST} -u \${DB_USERNAME} -p -e 'DROP DATABASE IF EXISTS test_${DB_NAME};'",
-                                hosts.jenkins.db, hosts.jenkins.credentialId)
-                    }
-                }
+//                try {
+//                    stage('Test') {
+//                        sh "${shellScriptDir}/development/test.sh"
+//                    }
+//                } finally {
+//                    stage('Publish test reports') {
+//                        // publish checkstyle analysis report
+//                        checkstyle canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
+//
+//                        // publish duplicate code analysis report, compatible with PHPUnit >= 7
+//                        // current version of CakePHP is incompatible with PHPUnit 7
+//                        // dry canComputeNew: false, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
+//
+//                        // publish mess detector analysis report
+//                        pmd canComputeNew: false, canRunOnFailed: true, defaultEncoding: '', healthy: '', pattern: '', unHealthy: ''
+//
+//                        // publish code coverage report
+//                        step([
+//                                $class              : 'CloverPublisher',
+//                                cloverReportDir     : reportDir,
+//                                cloverReportFileName: 'clover.xml',
+//                                healthyTarget       : [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80], // optional, default is: method=70, conditional=80, statement=80
+//                                unhealthyTarget     : [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50], // optional, default is none
+//                                failingTarget       : [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]     // optional, default is none
+//                        ])
+//
+//                        // publish phpunit test report
+//                        junit "${reportDir}/phpunit.xml"
+//
+//                        // remove test db
+//                        execute("echo \${DB_PASSWORD} | mysql -h \${DB_HOST} -u \${DB_USERNAME} -p -e 'DROP DATABASE IF EXISTS test_${DB_NAME};'",
+//                                hosts.jenkins.db, hosts.jenkins.credentialId)
+//                    }
+//                }
 
                 if (isPullRequest) {
                     // send files to staging server if tests passed and it's not a hotfix branch
